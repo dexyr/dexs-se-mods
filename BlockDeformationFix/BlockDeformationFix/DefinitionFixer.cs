@@ -7,9 +7,12 @@ using System.Threading.Tasks;
 using Sandbox.Definitions;
 using VRage.Game;
 using VRage.Game.Components;
+using VRage.Utils;
 
 namespace BlockDeformationFix
 {
+    // for debug purposes
+    // [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
 
     public class DefinitionFixer : MySessionComponentBase
@@ -26,8 +29,9 @@ namespace BlockDeformationFix
             }
         }
 
-        //
         Dictionary<MyDefinitionId, DeformationValues> definitionIdToValues = new Dictionary<MyDefinitionId, DeformationValues>();
+
+        string logMessage;
 
         public override void LoadData()
         {
@@ -35,6 +39,8 @@ namespace BlockDeformationFix
             // MyCubeBlockDefinition definitions = MyDefinitionManager.Static.GetAllDefinitions<MyCubeBlockDefinition>();
 
             var definitions = MyDefinitionManager.Static.GetAllDefinitions();
+
+            logMessage = "CHANGING BLOCKS\n";
 
             foreach (var definition in definitions)
             {
@@ -49,6 +55,15 @@ namespace BlockDeformationFix
 
                     cubeBlock.UsesDeformation = true;
                     cubeBlock.DeformationRatio = 0.4f;
+
+                    logMessage += $"{cubeBlock.Id.SubtypeName}\nwith GDM: {cubeBlock.GeneralDamageMultiplier}\n\n";
+
+                    if (cubeBlock.Id.SubtypeName.Equals("LargeHeavyBlockArmorBlock"))
+                    {
+                        logMessage += "found LargeHeavyBlockArmorBlock";
+
+                        cubeBlock.GeneralDamageMultiplier = 1;
+                    }
                 }
             }
         }
@@ -66,8 +81,16 @@ namespace BlockDeformationFix
                 {
                     cubeBlock.UsesDeformation = pair.Value.Uses;
                     cubeBlock.DeformationRatio = pair.Value.Ratio;
+
+                    if (cubeBlock.Id.SubtypeName.Equals("LargeHeavyBlockArmorBlock"))
+                        cubeBlock.GeneralDamageMultiplier = 0.5f;
                 }
             }
+        }
+
+        public override void UpdateAfterSimulation()
+        {
+            MyLog.Default.WriteLineAndConsole(logMessage);
         }
     }
 }
